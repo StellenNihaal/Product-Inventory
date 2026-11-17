@@ -3,9 +3,9 @@
 /**
  * phpBolt encoder for this Laravel app.
  *
- * Encrypts app/, routes/, and database/ PHP files.
- * Blade views, config, vendor, and bootstrap/app.php stay readable
- * because they are templates or must return values.
+ * Encrypts app/ and routes/ PHP files.
+ * database/migrations are NOT encrypted — Laravel needs their
+ * `return new class` value, which phpBolt's wrapper breaks.
  *
  * Usage:
  *   php tools/phpbolt/encrypt.php           Backup + encrypt + apply
@@ -17,7 +17,7 @@
 $base = dirname(__DIR__, 2);
 $backupDir = $base . DIRECTORY_SEPARATOR . 'tools' . DIRECTORY_SEPARATOR . 'phpbolt' . DIRECTORY_SEPARATOR . 'src-original';
 $distDir = $base . DIRECTORY_SEPARATOR . 'encrypted';
-$sources = ['app', 'routes', 'database'];
+$sources = ['app', 'routes'];
 $mode = 'apply';
 
 foreach (array_slice($argv, 1) as $arg) {
@@ -127,7 +127,7 @@ if ($mode === 'apply') {
         copyDirectory($from, $to);
         echo "Applied encrypted {$source}/\n";
     }
-    echo "Live app/, routes/, and database/ now use phpBolt. Restore with: php tools/phpbolt/encrypt.php --restore\n";
+    echo "Live app/ and routes/ now use phpBolt. Restore with: php tools/phpbolt/encrypt.php --restore\n";
 } else {
     echo "Dist only. Copy folders from encrypted/ when you are ready to ship.\n";
 }

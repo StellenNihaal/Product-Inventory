@@ -72,13 +72,20 @@ foreach ($includeFiles as $file) {
     }
 }
 
-foreach (['app', 'routes', 'database'] as $dir) {
+foreach (['app', 'routes'] as $dir) {
     copyDirectory(
         $base . DIRECTORY_SEPARATOR . 'encrypted' . DIRECTORY_SEPARATOR . $dir,
         $out . DIRECTORY_SEPARATOR . $dir
     );
     echo "Copied encrypted {$dir}/\n";
 }
+
+// Migrations must stay plaintext (Laravel needs return new class ...)
+$databaseFrom = is_dir($backupDir . DIRECTORY_SEPARATOR . 'database')
+    ? $backupDir . DIRECTORY_SEPARATOR . 'database'
+    : $base . DIRECTORY_SEPARATOR . 'database';
+copyDirectory($databaseFrom, $out . DIRECTORY_SEPARATOR . 'database');
+echo "Copied plaintext database/\n";
 
 // Keep storage structure, drop logs/cache/sessions contents.
 cleanStorageForDeploy($out . DIRECTORY_SEPARATOR . 'storage');

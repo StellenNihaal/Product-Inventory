@@ -32,7 +32,7 @@ RUN npm ci \
     && npm run build \
     && rm -rf node_modules
 
-# Encrypt app/routes/database inside the image only (git stays plaintext)
+# Encrypt app/ + routes/ inside the image only (migrations stay plaintext)
 RUN php tools/phpbolt/encrypt.php --apply \
     && rm -rf tools/phpbolt/src-original encrypted staging-build \
     && php -r 'echo extension_loaded("bolt") ? "bolt-ok\n" : "bolt-missing\n";'
