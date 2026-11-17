@@ -32,3 +32,4 @@ Thumbs.db
 
 /tools/phpbolt/php_bolt.dll
 /tools/phpbolt/*.dll
+!/tools/phpbolt/loaders/
