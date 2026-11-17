@@ -3,8 +3,12 @@ set -euo pipefail
 
 cd /var/www/html
 
-# Render/Railway inject PORT; bind artisan serve to it
 export PORT="${PORT:-8080}"
+
+# Render sets this automatically
+if [ -n "${RENDER_EXTERNAL_URL:-}" ] && [ -z "${APP_URL:-}" ]; then
+  export APP_URL="$RENDER_EXTERNAL_URL"
+fi
 
 # Railway-style MySQL plugin vars
 if [ -n "${MYSQLHOST:-}" ]; then
@@ -25,8 +29,8 @@ if [ -n "${DB_URL:-}" ]; then
 fi
 
 if [ -z "${APP_KEY:-}" ]; then
-  echo "ERROR: APP_KEY is not set. Generate one with: php artisan key:generate --show"
-  exit 1
+  echo "WARNING: APP_KEY missing — generating a temporary key for this boot"
+  export APP_KEY="$(php -r "echo 'base64:'.base64_encode(random_bytes(32));")"
 fi
 
 mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache
