@@ -16,10 +16,12 @@ if [ -n "${MYSQLHOST:-}" ]; then
   export DB_PASSWORD="${DB_PASSWORD:-${MYSQLPASSWORD:-}}"
 fi
 
-# Render Postgres often provides DATABASE_URL / DB_URL
-if [ -n "${DATABASE_URL:-}" ] || [ -n "${DB_URL:-}" ]; then
+# Render Postgres: Laravel reads DB_URL
+if [ -n "${DATABASE_URL:-}" ] && [ -z "${DB_URL:-}" ]; then
+  export DB_URL="$DATABASE_URL"
+fi
+if [ -n "${DB_URL:-}" ]; then
   export DB_CONNECTION="${DB_CONNECTION:-pgsql}"
-  export DATABASE_URL="${DATABASE_URL:-$DB_URL}"
 fi
 
 if [ -z "${APP_KEY:-}" ]; then
