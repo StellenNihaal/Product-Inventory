@@ -1,0 +1,69 @@
+# staging (plaintext) → encrypt → prod (encrypted in GitHub)
+name: Encrypt staging to prod
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  encrypt-and-push-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+
+      - name: Install phpBolt loader
+        run: |
+          set -euo pipefail
+          EXT_DIR="$(php -r 'echo ini_get("extension_dir");')"
+          echo "extension_dir=$EXT_DIR"
+          sudo cp tools/phpbolt/loaders/linux-php8.2/bolt.so "$EXT_DIR/bolt.so"
+          SCAN_DIR="$(php --ini | awk -F': ' '/Scan for additional/{print $2}')"
+          if [ -z "$SCAN_DIR" ] || [ "$SCAN_DIR" = "(none)" ]; then
+            SCAN_DIR="/tmp/php-bolt-conf"
+            mkdir -p "$SCAN_DIR"
+            echo "PHP_INI_SCAN_DIR=$SCAN_DIR" >> "$GITHUB_ENV"
+          fi
+          echo "extension=bolt.so" | sudo tee "$SCAN_DIR/99-bolt.ini"
+          php -m | grep -i bolt
+          php -r 'exit(function_exists("bolt_encrypt") && function_exists("bolt_decrypt") ? 0 : 1);'
+
+      - name: Encrypt app/ and routes/
+        run: |
+          set -euo pipefail
+          # Fresh backup from plaintext staging checkout
+          rm -rf tools/phpbolt/src-original encrypted staging-build
+          php tools/phpbolt/encrypt.php --apply
+          # Do not ship plaintext backup or build junk on prod
+          rm -rf tools/phpbolt/src-original encrypted staging-build
+          test -f app/Models/Product.php
+          head -n 3 app/Models/Product.php | grep -q bolt_decrypt
+          head -n 5 database/migrations/0001_01_01_000000_create_users_table.php | grep -q "return new class"
+
+      - name: Push encrypted tree to prod
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B prod
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit on prod"
+          else
+            git commit -m "chore: encrypted build from staging ${GITHUB_SHA}"
+          fi
+          git push origin prod --force
+          echo "prod branch updated (encrypted). Staging remains plaintext."

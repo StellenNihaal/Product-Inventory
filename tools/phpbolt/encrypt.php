@@ -7,6 +7,11 @@
  * database/migrations are NOT encrypted — Laravel needs their
  * `return new class` value, which phpBolt's wrapper breaks.
  *
+ * Branch flow:
+ *   staging = plaintext (developers)
+ *   push to staging → GitHub Action encrypts → force-updates prod
+ *   prod = encrypted (servers / Render deploy from prod)
+ *
  * Usage:
  *   php tools/phpbolt/encrypt.php           Backup + encrypt + apply
  *   php tools/phpbolt/encrypt.php --apply   Same as default

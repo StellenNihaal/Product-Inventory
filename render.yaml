@@ -12,6 +12,7 @@ services:
     name: product-inventory
     runtime: docker
     plan: free
+    branch: prod
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /up
@@ -19,7 +20,7 @@ services:
       - key: APP_NAME
         value: Product Inventory
       - key: APP_ENV
-        value: staging
+        value: production
       - key: APP_DEBUG
         value: "false"
       - key: APP_KEY
