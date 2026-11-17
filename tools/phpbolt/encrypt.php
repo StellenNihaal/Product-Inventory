@@ -7,11 +7,6 @@
  * database/migrations are NOT encrypted — Laravel needs their
  * `return new class` value, which phpBolt's wrapper breaks.
  *
- * Branch flow:
- *   staging = plaintext (developers)
- *   push to staging → GitHub Action encrypts → force-updates prod
- *   prod = encrypted (servers / Render deploy from prod)
- *
  * Usage:
  *   php tools/phpbolt/encrypt.php           Backup + encrypt + apply
  *   php tools/phpbolt/encrypt.php --apply   Same as default
@@ -72,10 +67,16 @@ if (!is_dir($backupDir)) {
     mkdir($backupDir, 0777, true);
 }
 
+$sample = $base . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Models' . DIRECTORY_SEPARATOR . 'Product.php';
+$liveIsPlaintext = is_file($sample) && !str_contains((string) file_get_contents($sample), 'bolt_decrypt(');
+
 foreach ($sources as $source) {
     $live = $base . DIRECTORY_SEPARATOR . $source;
     $backup = $backupDir . DIRECTORY_SEPARATOR . $source;
-    if (!is_dir($backup) || countPlainPhpFiles($backup) === 0) {
+    if ($liveIsPlaintext || !is_dir($backup) || countPlainPhpFiles($backup) === 0) {
+        if (is_dir($backup)) {
+            removeDirectory($backup);
+        }
         copyDirectory($live, $backup);
         echo "Backed up {$source}/ to tools/phpbolt/src-original/{$source}/\n";
     }

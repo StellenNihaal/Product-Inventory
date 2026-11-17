@@ -1,4 +1,4 @@
-# Staging/production image for Laravel + phpBolt (Render / Docker hosts)
+# Staging/production image for Laravel + phpBolt (Docker hosts)
 FROM php:8.2-cli-bookworm
 
 WORKDIR /var/www/html
@@ -32,12 +32,8 @@ RUN npm ci \
     && npm run build \
     && rm -rf node_modules
 
-# prod branch is already encrypted in Git; only encrypt if plaintext slipped in
-RUN if grep -q bolt_decrypt app/Models/Product.php 2>/dev/null; then \
-      echo "already-encrypted"; \
-    else \
-      php tools/phpbolt/encrypt.php --apply; \
-    fi \
+# Encrypt app/ + routes/ inside the image only (migrations stay plaintext)
+RUN php tools/phpbolt/encrypt.php --apply \
     && rm -rf tools/phpbolt/src-original encrypted staging-build \
     && php -r 'echo extension_loaded("bolt") ? "bolt-ok\n" : "bolt-missing\n";'
 
