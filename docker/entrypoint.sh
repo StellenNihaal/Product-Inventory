@@ -5,10 +5,13 @@ cd /var/www/html
 
 export PORT="${PORT:-8080}"
 
-# Render sets this automatically
-if [ -n "${RENDER_EXTERNAL_URL:-}" ] && [ -z "${APP_URL:-}" ]; then
+# Render terminates TLS; always prefer its https public URL
+if [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
   export APP_URL="$RENDER_EXTERNAL_URL"
+elif [ -n "${APP_URL:-}" ]; then
+  export APP_URL="$(php -r 'echo preg_replace("#^http://#","https://", getenv("APP_URL") ?: "");')"
 fi
+export ASSET_URL="${ASSET_URL:-$APP_URL}"
 
 # Railway-style MySQL plugin vars
 if [ -n "${MYSQLHOST:-}" ]; then
