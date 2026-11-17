@@ -3,10 +3,10 @@ set -euo pipefail
 
 cd /var/www/html
 
-# Railway injects PORT; bind artisan serve to it
+# Render/Railway inject PORT; bind artisan serve to it
 export PORT="${PORT:-8080}"
 
-# Map Railway MySQL plugin vars if present
+# Railway-style MySQL plugin vars
 if [ -n "${MYSQLHOST:-}" ]; then
   export DB_CONNECTION="${DB_CONNECTION:-mysql}"
   export DB_HOST="${DB_HOST:-$MYSQLHOST}"
@@ -14,6 +14,12 @@ if [ -n "${MYSQLHOST:-}" ]; then
   export DB_DATABASE="${DB_DATABASE:-${MYSQLDATABASE:-railway}}"
   export DB_USERNAME="${DB_USERNAME:-${MYSQLUSER:-root}}"
   export DB_PASSWORD="${DB_PASSWORD:-${MYSQLPASSWORD:-}}"
+fi
+
+# Render Postgres often provides DATABASE_URL / DB_URL
+if [ -n "${DATABASE_URL:-}" ] || [ -n "${DB_URL:-}" ]; then
+  export DB_CONNECTION="${DB_CONNECTION:-pgsql}"
+  export DATABASE_URL="${DATABASE_URL:-$DB_URL}"
 fi
 
 if [ -z "${APP_KEY:-}" ]; then
@@ -35,7 +41,6 @@ fi
 php artisan storage:link || true
 php artisan config:cache || true
 
-# Replace default CMD port with Railway PORT
 if [ "$#" -gt 0 ]; then
   if [ "$1" = "php" ] && [ "${2:-}" = "artisan" ] && [ "${3:-}" = "serve" ]; then
     exec php artisan serve --host=0.0.0.0 --port="$PORT"

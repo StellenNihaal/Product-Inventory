@@ -1,14 +1,14 @@
-# Railway staging/production image for Laravel + phpBolt
+# Staging/production image for Laravel + phpBolt (Render / Docker hosts)
 FROM php:8.2-cli-bookworm
 
 WORKDIR /var/www/html
 
-# System deps + PHP extensions Laravel needs
+# System deps + PHP extensions Laravel needs (MySQL + Postgres for Render)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip curl libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev libxml2-dev \
-        nodejs npm \
+        libpq-dev nodejs npm \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) pdo_mysql mysqli zip gd bcmath mbstring exif pcntl \
+    && docker-php-ext-install -j$(nproc) pdo_mysql mysqli pdo_pgsql pgsql zip gd bcmath mbstring exif pcntl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install phpBolt loader (Linux PHP 8.2 NTS)

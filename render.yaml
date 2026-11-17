@@ -1,0 +1,44 @@
+# Render Blueprint: Laravel + phpBolt (Docker)
+# Dashboard: New → Blueprint → select this repo
+
+databases:
+  - name: product-inventory-db
+    plan: free
+    databaseName: product_inventory
+    user: product_inventory
+
+services:
+  - type: web
+    name: product-inventory
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: Product Inventory
+      - key: APP_ENV
+        value: staging
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: product-inventory-db
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: RUN_MIGRATIONS
+        value: "true"
